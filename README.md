@@ -1,26 +1,29 @@
 # Clipshot
 
 ⌘P'ye bas, alanı seç: seçtiğin alan dosyaya değil doğrudan panoya gider, ⌘V ile istediğin yere yapıştırırsın.
-Menü çubuğunda yaşayan, Dock'ta görünmeyen küçük bir macOS uygulaması.
+Menü çubuğunda yaşayan, Dock'ta görünmeyen, kendini GitHub'dan güncelleyen küçük bir macOS uygulaması.
 
 ## Kurulum
 
-Gerekenler: macOS 26+ ve Xcode Command Line Tools (`xcode-select --install`). Xcode gerekmez.
+macOS 26 (Tahoe) ve Apple silicon gerekir.
 
 ```bash
-make run
+brew install --cask egekibar/tap/clipshot
 ```
 
-Release derlemesini alır, `dist/Clipshot.app`'i paketler, `~/Applications`'a kurar ve açar.
+Ya da [Releases](https://github.com/egekibar/Clipshot/releases) sayfasından `Clipshot-<sürüm>.dmg`'yi indirip
+Clipshot'u Uygulamalar'a sürükle. Uygulama Apple tarafından notarize edilmediği için DMG'den kurulan kopyayı ilk açışta
+macOS engeller: Sistem Ayarları › Gizlilik ve Güvenlik › "Yine de Aç". Homebrew bu adımı kendisi halleder.
 
-İlk açılışta macOS **Ekran Kaydı** izni ister: Sistem Ayarları › Gizlilik ve Güvenlik › Ekran Kaydı'nda
-Clipshot'u aç, sonra "Çık ve Yeniden Aç"a bas. İzin, uygulama yeniden başlayınca geçerli olur.
+İlk açılışta macOS **Ekran Kaydı** izni ister: Sistem Ayarları › Gizlilik ve Güvenlik › Ekran Kaydı'nda Clipshot'u
+aç, sonra "Çık ve Yeniden Aç"a bas. Güncellemeler aynı sertifikayla imzalandığı için izin sonraki sürümlerde korunur.
 
 ## Kullanım
 
 - **⌘P**: artı imleci çıkar, sürükleyerek alan seç. Bıraktığın anda görüntü panodadır ve menü çubuğunda kısa bir ✓ görünür.
 - **Space**: pencere seçimine geç. **Esc**: vazgeç.
-- Menü çubuğu simgesi: *Seçili Alanı Kopyala*, *Kısayolu Değiştir…*, *Kısayolu Duraklat*, *Clipshot'tan Çık*.
+- Menü çubuğu simgesi: *Seçili Alanı Kopyala*, *Kısayolu Değiştir…*, *Kısayolu Duraklat*, *Girişte Aç*,
+  *Menü Çubuğundan Gizle…*, *Güncellemeleri Denetle…*, *Clipshot'tan Çık*.
 
 ### ⌘P ve yazdırma
 
@@ -28,23 +31,44 @@ Clipshot açıkken ⌘P her uygulamada ekran görüntüsü alır, yani yazdırma
 menüden *Kısayolu Duraklat*'ı seç. Kalıcı olarak başka bir tuş istersen *Kısayolu Değiştir…* ile yeni bir kombinasyon
 kaydet (örneğin ⌃⇧⌘P). Seçimin saklanır; *Varsayılan (⌘P)* düğmesi geri döndürür.
 
-### Girişte başlatma
+### Girişte açılma
 
-Sistem Ayarları › Genel › Giriş Öğeleri › "Girişte Aç" listesine `~/Applications/Clipshot.app`'i ekle.
+İlk açılıştan itibaren açıktır; menüdeki *Girişte Aç* ile kapatılır. Clipshot bunun için
+`~/Library/LaunchAgents/com.egekibar.clipshot.plist` yazar; Sistem Ayarları › Genel › Giriş Öğeleri'nde Clipshot olarak
+görünür.
+
+### Menü çubuğundan gizleme
+
+*Menü Çubuğundan Gizle…* simgeyi kaldırır; kısayol çalışmaya devam eder ve girişte de gizli açılır. Simgeyi geri
+getirmek için Clipshot'u Spotlight'tan ya da Uygulamalar klasöründen yeniden aç.
+
+### Güncellemeler
+
+Clipshot açılıştan ~10 saniye sonra ve sonra en geç altı saatte bir GitHub'daki son sürüme bakar. Daha yeni bir sürüm
+varsa DMG'yi indirir, SHA-256 ile doğrular, seçim ya da kısayol kaydı açık değilken kendini kapatır, yeni sürümle
+değiştirir ve yeniden açar; soru sormaz. *Güncellemeleri Denetle…* beklemeden bakar.
 
 ## Geliştirme
+
+Gerekenler: Xcode Command Line Tools (`xcode-select --install`). Xcode gerekmez.
 
 | Komut | Ne yapar |
 |---|---|
 | `make test` | Tüm testler (Swift Testing). `make test FILTER='KeyCombo'` ile süz. |
-| `make bundle` | `dist/Clipshot.app` |
-| `make run` | Paketle, `~/Applications`'a kur, aç |
-| `make cert` | İsteğe bağlı: kalıcı "Clipshot Dev" imza sertifikası (aşağıya bak) |
+| `make run` | Release derlemesi, `~/Applications`'a kur, aç |
+| `make dmg` | `dist/Clipshot-<sürüm>.dmg` ve `.sha256` |
+| `make release VERSION=1.0.1` | Testler, sürüm, imzalı DMG, tag, GitHub release, Homebrew cask |
+| `make cert` | Her Mac'te bir kez: kalıcı "Clipshot Dev" imza sertifikası |
 | `make reset-tcc` | Ekran Kaydı iznini sıfırla |
 
-**İmza ve izin:** Anahtar Zinciri'nde imza kimliği yoksa paket ad-hoc imzalanır. Çalışır, ama Ekran Kaydı izni o
-derlemeye bağlıdır: yeniden derleyip kurunca macOS izni tekrar ister. `make cert` bir kez çalıştırılınca (Anahtar
-Zinciri güven onayı ister) imza sabit kalır ve izin derlemeler arasında korunur.
+**İmza:** Release'ler kalıcı bir sertifikayla imzalanır (`make cert`; Anahtar Zinciri güven onayı ister), böylece
+macOS her güncellemeyi aynı uygulama sayar ve Ekran Kaydı izni korunur. Sertifika yoksa yerel derlemeler ad-hoc
+imzalanır: çalışır, ama izin o derlemeye bağlıdır. `make release` sertifika olmadan çalışmaz.
+
+**Release:** `make release VERSION=1.0.1 [NOTES=notlar.md]` testleri çalıştırır, `Resources/Info.plist`'teki sürümü
+yükseltip commit'ler, imzalı DMG'yi üretir, `v1.0.1` tag'ini push'lar, release'i DMG ve `.sha256` ile yayımlar ve
+[egekibar/tap](https://github.com/egekibar/homebrew-tap)'teki cask'ı günceller. Yüklü Clipshot'lar en geç altı saat
+içinde kendini günceller.
 
 `scripts/make-icon.sh` simgeyi `scripts/render-icon.swift`'ten yeniden üretir.
 
@@ -58,12 +82,16 @@ Zinciri güven onayı ister) imza sabit kalır ve izin derlemeler arasında koru
   gerçek bir `.app` paketi gerekir.
 - **Sonuç:** Esc çıkış kodu 1 ve boş stderr demektir, hata sayılmaz. Kopyalamanın olduğu, panonun `changeCount`
   değerinin değişmesinden anlaşılır.
+- **Güncelleme:** `api.github.com/repos/egekibar/Clipshot/releases/latest` → DMG + `.sha256` → `hdiutil` ile salt okunur
+  bağla, paket kimliğini ve sürümü kontrol et, kopyala → Clipshot kapanınca ayrı bir `/bin/sh` eski paketi yenisiyle
+  değiştirir (başarısız olursa eskisini geri koyar) ve uygulamayı açar.
 
 | Modül | İçerik |
 |---|---|
-| `ClipshotCore` | Yalnızca Foundation: kısayol modeli ve saklanması, screencapture çalıştırıcısı, yakalama kuralları |
+| `ClipshotCore` | Yalnızca Foundation: kısayol modeli, screencapture çalıştırıcısı, yakalama kuralları, sürüm ve release okuma, güncelleme zamanlaması, giriş öğesi, tercihler |
 | `ClipshotHotKey` | Carbon kısayol servisi ve kısayolu yöneten denetleyici (duraklat, kaydet, geri yükle) |
+| `ClipshotUpdater` | GitHub release akışı, DMG indirme/doğrulama/hazırlama, paket değiştirme, otomatik güncelleyici |
 | `ClipshotApp` | AppKit: menü çubuğu, kısayol kayıt penceresi, uyarılar |
 
-Kısayol servisi, screencapture çağrısı ve paketleme/sertifika betikleri
+Kısayol servisi, screencapture çağrısı, güncelleyici ve paketleme/sertifika/cask betikleri
 [Shotcue](https://github.com/egekibar/Shotcue)'dan uyarlandı.

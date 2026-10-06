@@ -12,7 +12,10 @@ public struct MarkupDocument: Sendable {
     public var tool: MarkTool = .box
     private var colors: [MarkTool: MarkColor] = [.box: .red, .arrow: .red, .highlighter: .yellow, .pen: .red]
 
-    public init() {}
+    /// `marks`: those saved with a screenshot reopened from Geçmiş; they can be undone like new ones.
+    public init(marks: [Mark] = []) {
+        self.marks = marks
+    }
 
     /// The current tool's color; picking one changes that tool only.
     public var color: MarkColor {

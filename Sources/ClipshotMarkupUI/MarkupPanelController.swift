@@ -12,31 +12,33 @@ final class MarkupPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-/// The in-place marking panel: the screenshot frozen exactly where it was taken, a frame around it, the toolbar
-/// beneath. ↩ / ⌘C / Kopyala or clicking anywhere else keep the marks; Esc / ✕ drop them.
+/// The marking panel: a screenshot (frozen exactly where it was taken, or centered when it comes from Geçmiş), a frame
+/// around it, the toolbar beneath. ↩ / ⌘C / Kopyala copy, clicking anywhere else closes, Esc / ✕ drop the edits; what
+/// each of them does to the clipboard and to Geçmiş is `MarkupSession.finish`'s rule.
 public final class MarkupPanelController: NSObject, NSWindowDelegate {
-    /// The marked screenshot, for the clipboard. Not called when nothing was drawn or the marks were dropped.
-    private let onCopy: (CGImage) -> Void
-    /// After every close, whatever happened.
-    private let onClose: () -> Void
+    /// After every close: the image for the clipboard and the marks to keep, each nil when nothing changes.
+    private let onFinish: (MarkupResult) -> Void
     private var panel: MarkupPanel?
     private var canvas: MarkupCanvasView?
     private var toolbar: MarkupToolbar?
     private var keyMonitor: Any?
 
-    public init(onCopy: @escaping (CGImage) -> Void, onClose: @escaping () -> Void) {
-        self.onCopy = onCopy
-        self.onClose = onClose
+    public init(onFinish: @escaping (MarkupResult) -> Void) {
+        self.onFinish = onFinish
     }
 
     public var isOpen: Bool { panel != nil }
 
-    /// Shows `image` at `placement`. A panel that is still open is finished first, keeping its marks.
-    public func present(image: CGImage, placement: MarkupGeometry.Placement, visibleFrame: CGRect) {
-        finish(keepingMarks: true)
+    /// Shows `image` at `placement`, with `marks` already on it. `clipboardHasImage`: a fresh capture, whose plain
+    /// screenshot is already on the clipboard (from Geçmiş it is not). A panel still open is dismissed first.
+    public func present(
+        image: CGImage, marks: [Mark] = [], clipboardHasImage: Bool = true, placement: MarkupGeometry.Placement,
+        visibleFrame: CGRect
+    ) {
+        finish(.dismiss)
         let scale = CGFloat(image.width) / placement.imageSize.width
-        let content = Self.makeContent(
-            session: MarkupSession(image: image, scale: scale), placement: placement, visibleFrame: visibleFrame)
+        let session = MarkupSession(image: image, scale: scale, marks: marks, clipboardHasImage: clipboardHasImage)
+        let content = Self.makeContent(session: session, placement: placement, visibleFrame: visibleFrame)
 
         let panel = MarkupPanel(
             contentRect: content.layout.panel, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered,
@@ -77,8 +79,8 @@ public final class MarkupPanelController: NSObject, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
 
-    /// Closes the panel. With `keepingMarks`, a screenshot that has marks goes to the clipboard first.
-    public func finish(keepingMarks: Bool) {
+    /// Closes the panel and reports what `ending` means for the clipboard and for Geçmiş.
+    public func finish(_ ending: MarkupEnding) {
         guard let panel, let canvas else { return }
         self.panel = nil
         self.canvas = nil
@@ -88,21 +90,20 @@ public final class MarkupPanelController: NSObject, NSWindowDelegate {
         panel.delegate = nil
         panel.orderOut(nil)
         var session = canvas.session
-        if let marked = session.finish(keepingMarks: keepingMarks) { onCopy(marked) }
-        onClose()
+        onFinish(session.finish(ending))
     }
 
-    /// Clicking anywhere outside the panel counts as done: the marks are kept.
+    /// Clicking anywhere outside the panel closes it.
     public func windowDidResignKey(_ notification: Notification) {
-        finish(keepingMarks: true)
+        finish(.dismiss)
     }
 
     func perform(_ action: MarkupAction) {
         switch action {
         case .tool(let tool): canvas?.session.document.tool = tool
         case .undo: canvas?.session.document.undo()
-        case .copy: finish(keepingMarks: true)
-        case .cancel: finish(keepingMarks: false)
+        case .copy: finish(.copy)
+        case .cancel: finish(.cancel)
         }
         refreshToolbar()
     }

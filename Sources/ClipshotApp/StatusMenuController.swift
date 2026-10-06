@@ -6,8 +6,10 @@ import ClipshotUpdater
 /// What the menu's items do beyond what the menu can do on its own.
 struct StatusMenuActions {
     var capture: () -> Void
+    var showHistory: () -> Void
     var changeShortcut: () -> Void
     var hideIcon: () -> Void
+    var showSettings: () -> Void
     var checkForUpdates: () -> Void
 }
 
@@ -70,6 +72,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
         menu.addItem(item("Seçili Alanı Kopyala", action: #selector(captureClicked)))
+        menu.addItem(item("Geçmiş…", action: #selector(historyClicked)))
         menu.addItem(.separator())
         menu.addItem(info(shortcutLine))
         if let error = hotKeys.registrationError { menu.addItem(info(Alerts.describe(error))) }
@@ -87,6 +90,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
             menu.addItem(login)
         }
         menu.addItem(item("Menü Çubuğundan Gizle…", action: #selector(hideClicked)))
+        menu.addItem(item("Ayarlar…", action: #selector(settingsClicked)))
         menu.addItem(.separator())
         menu.addItem(info(versionLine))
         if updater != nil {
@@ -117,6 +121,8 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     @objc private func captureClicked() { actions.capture() }
     @objc private func changeShortcutClicked() { actions.changeShortcut() }
     @objc private func hideClicked() { actions.hideIcon() }
+    @objc private func historyClicked() { actions.showHistory() }
+    @objc private func settingsClicked() { actions.showSettings() }
     @objc private func checkForUpdatesClicked() { actions.checkForUpdates() }
     @objc private func permissionClicked() { Alerts.screenRecordingMissing() }
     @objc private func quitClicked() { NSApp.terminate(nil) }

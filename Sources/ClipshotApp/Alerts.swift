@@ -67,6 +67,17 @@ enum Alerts {
         return present(alert) == .alertFirstButtonReturn
     }
 
+    /// True: delete every kept screenshot.
+    static func confirmClearingHistory() -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Geçmiş temizlensin mi?"
+        alert.informativeText = "Saklanan bütün ekran görüntüleri silinir. Bu geri alınamaz."
+        alert.addButton(withTitle: "Temizle").hasDestructiveAction = true
+        addCancel("Vazgeç", to: alert)
+        return present(alert) == .alertFirstButtonReturn
+    }
+
     static func upToDate(_ version: AppVersion) {
         let alert = NSAlert()
         alert.messageText = "Clipshot güncel"

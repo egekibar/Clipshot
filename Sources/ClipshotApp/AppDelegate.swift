@@ -1,13 +1,18 @@
 import AppKit
 import ClipshotCore
+import ClipshotHistoryUI
 import ClipshotHotKey
 import ClipshotUpdater
 
-/// Composition root: the capture, the global shortcut, the menu bar item, the shortcut recorder, the login item and
-/// the auto-updater.
+/// Composition root: the capture, Geçmiş, the global shortcut, the menu bar item, the shortcut recorder, Ayarlar, the
+/// login item and the auto-updater.
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let capture = CaptureController()
+    private let history = HistoryArchive()
+    private lazy var capture = CaptureController(history: history)
     private let preferences = AppPreferences()
+    private var historyWindow: HistoryWindowController!
+    private var settingsWindow: SettingsWindowController!
+    private var housekeeping: Task<Void, Never>?
     private var hotKeys: HotKeyController!
     private var statusMenu: StatusMenuController!
     private var recorder: ShortcutRecorderController!
@@ -27,9 +32,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             hotKeys: hotKeys, loginItem: loginItem, updater: updater,
             actions: StatusMenuActions(
                 capture: { capture.begin() },
+                showHistory: { [unowned self] in historyWindow.show() },
                 changeShortcut: { [unowned self] in recorder.show() },
                 hideIcon: { [unowned self] in hideIcon() },
+                showSettings: { [unowned self] in settingsWindow.show() },
                 checkForUpdates: { [unowned self] in checkForUpdates() }))
+        historyWindow = HistoryWindowController(
+            actions: .init(
+                items: { [history] in history.items() },
+                thumbnailURL: { [history] in history.store.thumbnailURL(of: $0) },
+                historyDays: { [preferences] in preferences.historyDays },
+                open: { capture.open($0) }, copy: { capture.copy($0) },
+                delete: { [history] in history.delete($0.id) },
+                showSettings: { [unowned self] in settingsWindow.show() },
+                closed: { Alerts.yieldFocusIfDone() }))
+        settingsWindow = SettingsWindowController(
+            preferences: preferences,
+            onHistoryDaysChange: { [unowned self] in
+                history.prune(keepingDays: preferences.historyDays)
+                historyWindow.reload()
+            },
+            confirmClear: { Alerts.confirmClearingHistory() },
+            onClearHistory: { [history] in history.deleteAll() },
+            onClose: { Alerts.yieldFocusIfDone() })
+        history.onChange = { [unowned self] in
+            if historyWindow.isVisible { historyWindow.reload() }
+        }
         recorder = ShortcutRecorderController(hotKeys: hotKeys) { [unowned self] in
             statusMenu.refresh()
             updater?.installIfIdle()
@@ -53,6 +81,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The system asks for Screen Recording once, at the first launch, instead of on the first ⌘P.
         if !ScreenRecordingPermission.isGranted { ScreenRecordingPermission.request() }
         startUpdateLoop()
+        startHousekeeping()
+    }
+
+    /// Geçmiş drops what is older than the chosen number of days: at launch, then every hour.
+    private func startHousekeeping() {
+        housekeeping = Task { [history, preferences] in
+            while !Task.isCancelled {
+                history.prune(keepingDays: preferences.historyDays)
+                try? await Task.sleep(for: .seconds(3600))
+            }
+        }
     }
 
     /// Opening Clipshot again (Spotlight, Finder, Launchpad) brings a hidden icon back and opens its menu.

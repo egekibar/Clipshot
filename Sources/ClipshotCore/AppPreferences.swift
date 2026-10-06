@@ -6,6 +6,7 @@ public struct AppPreferences {
         static let menuBarIconHidden = "menuBarIconHidden"
         static let loginItemConfigured = "loginItemConfigured"
         static let lastUpdateCheck = "lastUpdateCheck"
+        static let historyDays = "historyDays"
     }
 
     let store: any PreferenceStore
@@ -24,6 +25,18 @@ public struct AppPreferences {
     public var hasConfiguredLoginItem: Bool {
         get { store.object(forKey: Key.loginItemConfigured) as? Bool ?? false }
         nonmutating set { store.set(newValue, forKey: Key.loginItemConfigured) }
+    }
+
+    /// How long screenshots stay in Geçmiş (Ayarlar' stepper: 1–30 days); three unless the user picks otherwise.
+    public var historyDays: Int {
+        get { Self.clampedHistoryDays(store.object(forKey: Key.historyDays) as? Int ?? 3) }
+        nonmutating set { store.set(Self.clampedHistoryDays(newValue), forKey: Key.historyDays) }
+    }
+
+    public static let historyDaysRange = 1...30
+
+    static func clampedHistoryDays(_ days: Int) -> Int {
+        min(max(days, historyDaysRange.lowerBound), historyDaysRange.upperBound)
     }
 
     public var lastUpdateCheck: Date? {

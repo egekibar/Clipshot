@@ -23,8 +23,8 @@ aç, sonra "Çık ve Yeniden Aç"a bas. Güncellemeler aynı sertifikayla imzala
 - **⌘P**: artı imleci çıkar, sürükleyerek alan seç. Bıraktığın anda görüntü panodadır ve menü çubuğunda kısa bir ✓ görünür.
 - **Space**: pencere seçimine geç. **Esc**: vazgeç.
 - Seçimden sonra alan yerinde donar; istersen üzerine işaret koyarsın (aşağıya bak).
-- Menü çubuğu simgesi: *Seçili Alanı Kopyala*, *Kısayolu Değiştir…*, *Kısayolu Duraklat*, *Girişte Aç*,
-  *Menü Çubuğundan Gizle…*, *Güncellemeleri Denetle…*, *Clipshot'tan Çık*.
+- Menü çubuğu simgesi: *Seçili Alanı Kopyala*, *Geçmiş…*, *Kısayolu Değiştir…*, *Kısayolu Duraklat*, *Girişte Aç*,
+  *Menü Çubuğundan Gizle…*, *Ayarlar…*, *Güncellemeleri Denetle…*, *Clipshot'tan Çık*.
 
 ### İşaretleme
 
@@ -40,6 +40,17 @@ küçük bir araç çubuğu. İşaret koyman gerekmiyorsa başka bir yere tıkla
 
 Renkler araç çubuğundaki noktalardan seçilir; her araç kendi rengini hatırlar (fosforlu kalem sarı başlar). Panoya
 giden görüntü tam Retina çözünürlüğündedir. İşaretlerken ⌘P'ye basarsan işaretler korunur ve yeni seçim başlar.
+
+### Geçmiş
+
+Her ekran görüntüsü işaretleriyle birlikte saklanır; menüden *Geçmiş…* onları günlere ayrılmış bir ızgarada gösterir.
+Birine tıklayınca işaretleme ekranında açılır: işaretleri yerindedir ve düzenlenebilir, ↩ ya da *Kopyala* panoya koyar.
+Başka bir yere tıklamak panoya dokunmadan kapatır (yeni işaretler kaydedilir), Esc değişiklikleri atar. Sağ tıkla
+*Kopyala* ya da *Sil*.
+
+Görüntüler varsayılan olarak 3 gün tutulur; *Ayarlar…* içinden 1–30 gün arasında değiştirilir, *Geçmişi Temizle…*
+hepsini siler. Dosyalar yalnızca bu Mac'te, `~/Library/Application Support/Clipshot` içinde durur ve süresi dolanlar
+kendiliğinden silinir.
 
 ### ⌘P ve yazdırma
 
@@ -111,6 +122,8 @@ içinde kendini günceller.
 | `ClipshotHotKey` | Carbon kısayol servisi ve kısayolu yöneten denetleyici (duraklat, kaydet, geri yükle) |
 | `ClipshotMarkup` | Yalnızca CoreGraphics: işaretler, geri alma, panel yerleşimi, kısayollar, Retina çizimi |
 | `ClipshotMarkupUI` | AppKit: işaretleme paneli, tuval, araç çubuğu |
+| `ClipshotHistory` | Geçmiş: ekran görüntüleri, işaretleri ve küçük resimleri diskte; süresi dolanları silme; günlere ayırma |
+| `ClipshotHistoryUI` | AppKit: Geçmiş ve Ayarlar pencereleri |
 | `ClipshotUpdater` | GitHub release akışı, DMG indirme/doğrulama/hazırlama, paket değiştirme, otomatik güncelleyici |
 | `ClipshotApp` | AppKit: menü çubuğu, kısayol kayıt penceresi, uyarılar |
 

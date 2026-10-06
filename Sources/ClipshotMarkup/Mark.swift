@@ -1,12 +1,12 @@
 import CoreGraphics
 
 /// The four ways to mark a spot, in toolbar order (keys 1–4).
-public enum MarkTool: String, CaseIterable, Sendable {
+public enum MarkTool: String, CaseIterable, Codable, Sendable {
     case box, arrow, highlighter, pen
 }
 
 /// An opaque sRGB color; the highlighter adds its own transparency.
-public struct MarkColor: Hashable, Sendable {
+public struct MarkColor: Hashable, Codable, Sendable {
     public var red: CGFloat
     public var green: CGFloat
     public var blue: CGFloat
@@ -32,7 +32,7 @@ public struct MarkColor: Hashable, Sendable {
 
 /// One mark, in image points with the origin top-left. Box, arrow and highlighter keep their start and end;
 /// the pen keeps every sample of its path.
-public struct Mark: Equatable, Sendable {
+public struct Mark: Equatable, Codable, Sendable {
     public var tool: MarkTool
     public var color: MarkColor
     public var points: [CGPoint]

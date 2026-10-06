@@ -30,6 +30,7 @@ cask "clipshot" do
             quit:      "com.egekibar.clipshot"
 
   zap trash: [
+    "~/Library/Application Support/Clipshot",
     "~/Library/LaunchAgents/com.egekibar.clipshot.plist",
     "~/Library/Preferences/com.egekibar.clipshot.plist",
   ]

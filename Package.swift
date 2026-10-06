@@ -21,6 +21,11 @@ let package = Package(
         .target(name: "ClipshotHotKey", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
         // Marks on a screenshot: model, undo, geometry, keys and rendering. CoreGraphics only, fully testable.
         .target(name: "ClipshotMarkup", swiftSettings: serviceSettings),
+        // Geçmiş: screenshots with their marks on disk, pruned after the chosen number of days.
+        .target(name: "ClipshotHistory", dependencies: ["ClipshotMarkup"], swiftSettings: serviceSettings),
+        // The Geçmiş and Ayarlar windows (AppKit).
+        .target(
+            name: "ClipshotHistoryUI", dependencies: ["ClipshotHistory", "ClipshotCore"], swiftSettings: appSettings),
         // The in-place marking panel: canvas, toolbar, keyboard (AppKit).
         .target(name: "ClipshotMarkupUI", dependencies: ["ClipshotMarkup"], swiftSettings: appSettings),
         // Updates from GitHub Releases: release feed, DMG download/verify/stage, post-exit bundle swap, auto-updater.
@@ -30,7 +35,10 @@ let package = Package(
         // AppKit composition root: menu bar item, shortcut recorder, alerts. No logic worth a test lives here.
         .executableTarget(
             name: "ClipshotApp",
-            dependencies: ["ClipshotCore", "ClipshotHotKey", "ClipshotUpdater", "ClipshotMarkup", "ClipshotMarkupUI"],
+            dependencies: [
+                "ClipshotCore", "ClipshotHotKey", "ClipshotUpdater", "ClipshotMarkup", "ClipshotMarkupUI",
+                "ClipshotHistory", "ClipshotHistoryUI",
+            ],
             swiftSettings: appSettings),
         .testTarget(
             name: "ClipshotCoreTests", dependencies: ["ClipshotCore", "ClipshotTestSupport"],
@@ -38,7 +46,16 @@ let package = Package(
         .testTarget(
             name: "ClipshotHotKeyTests", dependencies: ["ClipshotHotKey", "ClipshotCore", "ClipshotTestSupport"],
             swiftSettings: serviceSettings),
-        .testTarget(name: "ClipshotMarkupTests", dependencies: ["ClipshotMarkup"], swiftSettings: serviceSettings),
+        .testTarget(
+            name: "ClipshotMarkupTests", dependencies: ["ClipshotMarkup", "ClipshotTestSupport"],
+            swiftSettings: serviceSettings),
+        .testTarget(
+            name: "ClipshotHistoryTests", dependencies: ["ClipshotHistory", "ClipshotMarkup", "ClipshotTestSupport"],
+            swiftSettings: serviceSettings),
+        .testTarget(
+            name: "ClipshotHistoryUITests",
+            dependencies: ["ClipshotHistoryUI", "ClipshotHistory", "ClipshotMarkup", "ClipshotTestSupport"],
+            swiftSettings: appSettings),
         .testTarget(
             name: "ClipshotMarkupUITests", dependencies: ["ClipshotMarkupUI", "ClipshotMarkup"],
             swiftSettings: appSettings),

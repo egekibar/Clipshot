@@ -140,10 +140,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             let result = await updater.checkNow()
             Self.log(result)
-            switch result {
-            case .upToDate(let version): Alerts.upToDate(version)
-            case .failed(let error): Alerts.updateFailed(error)
-            case .updating, .busy: break  // Clipshot restarts on its own once the new version is in place
+            Alerts.fromRunLoop {
+                switch result {
+                case .upToDate(let version): Alerts.upToDate(version)
+                case .failed(let error): Alerts.updateFailed(error)
+                case .updating, .busy: break  // Clipshot restarts on its own once the new version is in place
+                }
             }
         }
     }

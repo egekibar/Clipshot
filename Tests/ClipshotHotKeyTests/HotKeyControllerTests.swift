@@ -1,5 +1,6 @@
 import Carbon.HIToolbox
 import ClipshotCore
+import ClipshotTestSupport
 import Testing
 
 @testable import ClipshotHotKey
@@ -8,7 +9,7 @@ extension CarbonSuite {
     @MainActor
     @Suite("HotKeyController")
     final class HotKeyControllerTests {
-        let scratch = ScratchDefaults()
+        let store = MemoryPreferenceStore()
         let service = CarbonHotKeyService()
         let presses = PressCounter()
 
@@ -17,7 +18,7 @@ extension CarbonSuite {
 
         /// A controller whose saved combo is `saved` (testA unless a test says otherwise).
         func controller(saved: KeyCombo = .testA) -> HotKeyController {
-            let settings = HotKeySettings(defaults: scratch.defaults)
+            let settings = HotKeySettings(store: store)
             settings.combo = saved
             let presses = presses
             return HotKeyController(service: service, settings: settings) { presses.press() }
@@ -82,7 +83,7 @@ extension CarbonSuite {
             hotKeys.beginRecording()
             try hotKeys.finishRecording(with: nil)
             #expect(service.registeredCombo == .testA)
-            #expect(HotKeySettings(defaults: scratch.defaults).combo == .testA)
+            #expect(HotKeySettings(store: store).combo == .testA)
         }
 
         @Test func recordedComboIsRegisteredAndSurvivesARelaunch() throws {
@@ -92,7 +93,7 @@ extension CarbonSuite {
             try hotKeys.finishRecording(with: .testB)
             #expect(service.registeredCombo == .testB)
             #expect(isFree(.testA))
-            #expect(HotKeySettings(defaults: scratch.defaults).combo == .testB)
+            #expect(HotKeySettings(store: store).combo == .testB)
         }
 
         /// A refused combo leaves the saved one untouched and the recorder open for another try.
@@ -108,7 +109,7 @@ extension CarbonSuite {
                 try hotKeys.finishRecording(with: .testB)
             }
             #expect(hotKeys.isRecording)
-            #expect(HotKeySettings(defaults: scratch.defaults).combo == .testA)
+            #expect(HotKeySettings(store: store).combo == .testA)
 
             try hotKeys.finishRecording(with: nil)
             #expect(service.registeredCombo == .testA)

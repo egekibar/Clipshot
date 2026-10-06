@@ -21,16 +21,20 @@ let package = Package(
         .target(name: "ClipshotHotKey", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
         // Updates from GitHub Releases: release feed, DMG download/verify/stage, post-exit bundle swap, auto-updater.
         .target(name: "ClipshotUpdater", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
+        // Shared by the test targets only (never linked into the app).
+        .target(name: "ClipshotTestSupport", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
         // AppKit composition root: menu bar item, shortcut recorder, alerts. No logic worth a test lives here.
         .executableTarget(
             name: "ClipshotApp", dependencies: ["ClipshotCore", "ClipshotHotKey", "ClipshotUpdater"],
             swiftSettings: appSettings),
-        .testTarget(name: "ClipshotCoreTests", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
         .testTarget(
-            name: "ClipshotHotKeyTests", dependencies: ["ClipshotHotKey", "ClipshotCore"],
+            name: "ClipshotCoreTests", dependencies: ["ClipshotCore", "ClipshotTestSupport"],
             swiftSettings: serviceSettings),
         .testTarget(
-            name: "ClipshotUpdaterTests", dependencies: ["ClipshotUpdater", "ClipshotCore"],
+            name: "ClipshotHotKeyTests", dependencies: ["ClipshotHotKey", "ClipshotCore", "ClipshotTestSupport"],
+            swiftSettings: serviceSettings),
+        .testTarget(
+            name: "ClipshotUpdaterTests", dependencies: ["ClipshotUpdater", "ClipshotCore", "ClipshotTestSupport"],
             swiftSettings: serviceSettings),
     ],
     swiftLanguageModes: [.v6]

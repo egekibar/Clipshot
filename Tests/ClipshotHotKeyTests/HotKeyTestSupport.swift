@@ -1,5 +1,6 @@
 import Carbon.HIToolbox
 import ClipshotCore
+import ClipshotTestSupport
 import Foundation
 import Synchronization
 import Testing
@@ -24,15 +25,6 @@ final class PressCounter: Sendable {
     private let count = Mutex(0)
     var value: Int { count.withLock { $0 } }
     func press() { count.withLock { $0 += 1 } }
-}
-
-/// A private defaults domain per test, removed again when the test ends.
-final class ScratchDefaults {
-    let name = "clipshot-tests-\(UUID().uuidString)"
-    let defaults: UserDefaults
-
-    init() { defaults = UserDefaults(suiteName: name)! }
-    deinit { defaults.removePersistentDomain(forName: name) }
 }
 
 struct CarbonEventError: Error {

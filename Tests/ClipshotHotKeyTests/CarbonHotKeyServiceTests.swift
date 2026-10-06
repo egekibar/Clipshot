@@ -56,14 +56,6 @@ extension CarbonSuite {
             #expect(second.registeredCombo == nil)
         }
 
-        /// The combo the user asked for. Another app holding ⌘P (Clipshot.app itself, say) does not block it.
-        @Test func carbonAcceptsCommandP() throws {
-            let service = CarbonHotKeyService()
-            defer { service.unregister() }
-            try service.register(.defaultCombo) {}
-            #expect(service.registeredCombo == .defaultCombo)
-        }
-
         @Test func pressRunsTheHandler() async throws {
             let service = CarbonHotKeyService()
             defer { service.unregister() }

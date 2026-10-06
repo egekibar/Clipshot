@@ -45,6 +45,14 @@ final class ShortcutRecorderController: NSObject, NSWindowDelegate {
         if hotKeys.isRecording { try? hotKeys.finishRecording(with: nil) }
         stopMonitor()
         onChange()
+        Alerts.yieldFocusIfDone()
+    }
+
+    /// Clicking away cancels: the shortcut is released while the recorder listens, so a forgotten window would leave
+    /// ⌘P printing again in every app.
+    func windowDidResignKey(_ notification: Notification) {
+        // A window that is closing resigns key too; by then the recording is already over.
+        if hotKeys.isRecording { window?.close() }
     }
 
     private func startMonitor() {
@@ -75,6 +83,8 @@ final class ShortcutRecorderController: NSObject, NSWindowDelegate {
             window?.close()
         case .rejected:
             setHint("Bu kombinasyon kullanılamaz: ⌘, ⌃ veya ⌥ ile birlikte bas.", isError: true)
+        case .reserved(let label):
+            setHint("\(label) her uygulamada düzenleme için gerekli; başka bir kombinasyon seç.", isError: true)
         case .combo(let combo):
             apply(combo)
         }

@@ -76,6 +76,22 @@ struct CaptureFlowTests {
         #expect(runs == 1)
     }
 
+    /// Pressing again while the previous press's alert (say, "Ekran Kaydı izni gerekli") is still open must not
+    /// stack a second alert or start a selection under it.
+    @Test func pressWhileAnAlertIsOpenIsDropped() async {
+        var runs = 0
+        let flow = CaptureFlow(
+            isPermissionGranted: { false },
+            clipboardChangeCount: { 7 },
+            runScreencapture: {
+                runs += 1
+                return ScreencaptureResult(exitCode: 0, stderr: "")
+            },
+            isAlertOpen: { true })
+        #expect(await flow.capture() == .busy)
+        #expect(runs == 0)
+    }
+
     @Test func nextPressAfterAFinishedSelectionRunsAgain() async {
         var runs = 0
         let flow = CaptureFlow(

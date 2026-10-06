@@ -1,4 +1,5 @@
 import ClipshotCore
+import ClipshotTestSupport
 import Foundation
 import Testing
 
@@ -48,14 +49,14 @@ actor FakeInstaller: UpdateInstaller {
 @MainActor
 @Suite("AutoUpdater")
 final class AutoUpdaterTests {
-    let scratch = ScratchDefaults()
+    let store = MemoryPreferenceStore()
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     let staged = URL(fileURLWithPath: "/tmp/staging/Clipshot.app")
     var idle = true
     var installs: [URL] = []
     var installError: UpdateError?
 
-    var preferences: AppPreferences { AppPreferences(defaults: scratch.defaults) }
+    var preferences: AppPreferences { AppPreferences(store: store) }
 
     static func release(_ major: Int, _ minor: Int, _ patch: Int, prerelease: Bool = false) -> ReleaseInfo {
         ReleaseInfo(
@@ -188,13 +189,4 @@ final class AutoUpdaterTests {
         #expect(installs == [staged])
         #expect(await installer.prepared.count == 2)
     }
-}
-
-/// A private defaults domain per test, removed again when the test ends.
-final class ScratchDefaults {
-    let name = "clipshot-tests-\(UUID().uuidString)"
-    let defaults: UserDefaults
-
-    init() { defaults = UserDefaults(suiteName: name)! }
-    deinit { defaults.removePersistentDomain(forName: name) }
 }

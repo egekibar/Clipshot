@@ -1,6 +1,6 @@
 import Foundation
 
-/// Small choices that outlive a launch (UserDefaults). The shortcut has its own store, `HotKeySettings`.
+/// Small choices that outlive a launch (UserDefaults in the app). The shortcut has its own store, `HotKeySettings`.
 public struct AppPreferences {
     enum Key {
         static let menuBarIconHidden = "menuBarIconHidden"
@@ -8,26 +8,26 @@ public struct AppPreferences {
         static let lastUpdateCheck = "lastUpdateCheck"
     }
 
-    let defaults: UserDefaults
+    let store: any PreferenceStore
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any PreferenceStore = UserDefaults.standard) {
+        self.store = store
     }
 
     /// "Menü Çubuğundan Gizle": the shortcut keeps working, reopening the app shows the icon again.
     public var isMenuBarIconHidden: Bool {
-        get { defaults.bool(forKey: Key.menuBarIconHidden) }
-        nonmutating set { defaults.set(newValue, forKey: Key.menuBarIconHidden) }
+        get { store.object(forKey: Key.menuBarIconHidden) as? Bool ?? false }
+        nonmutating set { store.set(newValue, forKey: Key.menuBarIconHidden) }
     }
 
     /// Set once the first launch has turned "Girişte Aç" on, so a later "off" is never undone.
     public var hasConfiguredLoginItem: Bool {
-        get { defaults.bool(forKey: Key.loginItemConfigured) }
-        nonmutating set { defaults.set(newValue, forKey: Key.loginItemConfigured) }
+        get { store.object(forKey: Key.loginItemConfigured) as? Bool ?? false }
+        nonmutating set { store.set(newValue, forKey: Key.loginItemConfigured) }
     }
 
     public var lastUpdateCheck: Date? {
-        get { defaults.object(forKey: Key.lastUpdateCheck) as? Date }
-        nonmutating set { defaults.set(newValue, forKey: Key.lastUpdateCheck) }
+        get { store.object(forKey: Key.lastUpdateCheck) as? Date }
+        nonmutating set { store.set(newValue, forKey: Key.lastUpdateCheck) }
     }
 }

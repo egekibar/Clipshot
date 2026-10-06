@@ -33,6 +33,21 @@ struct RecorderInputTests {
         #expect(RecorderInput.interpret(keyCode: 0x0D, modifiers: command | shift, characters: "w") == .combo(want))
     }
 
+    /// ⌘C, ⌘V, ⌘X, ⌘Z and ⌘A belong to every app; taking ⌘V would even block pasting the screenshot.
+    /// Matched by character, like ⌘W and ⌘Q.
+    @Test func editingShortcutsAreReserved() {
+        #expect(RecorderInput.interpret(keyCode: 0x08, modifiers: command, characters: "c") == .reserved("⌘C"))
+        #expect(RecorderInput.interpret(keyCode: 0x09, modifiers: command, characters: "v") == .reserved("⌘V"))
+        #expect(RecorderInput.interpret(keyCode: 0x07, modifiers: command, characters: "x") == .reserved("⌘X"))
+        #expect(RecorderInput.interpret(keyCode: 0x06, modifiers: command, characters: "z") == .reserved("⌘Z"))
+        #expect(RecorderInput.interpret(keyCode: 0x00, modifiers: command, characters: "a") == .reserved("⌘A"))
+    }
+
+    @Test func editingKeysWithMoreModifiersAreRecorded() {
+        let want = KeyCombo(keyCode: 0x09, modifiers: command | shift, label: "⇧⌘V")
+        #expect(RecorderInput.interpret(keyCode: 0x09, modifiers: command | shift, characters: "v") == .combo(want))
+    }
+
     @Test func commandPIsTheDefault() {
         #expect(RecorderInput.interpret(keyCode: 0x23, modifiers: command, characters: "p") == .combo(.defaultCombo))
     }

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 public struct ScreencaptureResult: Equatable, Sendable {
     public var exitCode: Int32
@@ -50,10 +51,15 @@ public struct ScreencaptureRunner: Sendable {
         process.standardError = errorPipe
 
         // Drain stderr concurrently. Waiting for exit first would deadlock if the child ever filled the
-        // 64 KB pipe buffer; reading first would block this task for the whole (unbounded) selection.
+        // 64 KB pipe buffer; reading first would block this task for the whole (unbounded) selection. The blocking
+        // read runs on a GCD thread, not on one of Swift's few cooperative threads.
         let readEnd = errorPipe.fileHandleForReading
-        let stderrTask = Task.detached(priority: .utility) { () -> Data in
-            ((try? readEnd.readToEnd()) ?? nil) ?? Data()
+        let stderr = CollectedData()
+        let stderrRead = DispatchGroup()
+        stderrRead.enter()
+        DispatchQueue.global(qos: .utility).async {
+            stderr.set(((try? readEnd.readToEnd()) ?? nil) ?? Data())
+            stderrRead.leave()
         }
 
         let exitCode: Int32
@@ -73,12 +79,21 @@ public struct ScreencaptureRunner: Sendable {
         } catch {
             // The child never started, so nothing holds the pipe's write end open for the reader but us.
             try? errorPipe.fileHandleForWriting.close()
-            stderrTask.cancel()
             throw error
         }
 
-        let stderrText = String(decoding: await stderrTask.value, as: UTF8.self)
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            stderrRead.notify(queue: .global(qos: .utility)) { done.resume() }
+        }
+        let stderrText = String(decoding: stderr.value, as: UTF8.self)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return ScreencaptureResult(exitCode: exitCode, stderr: stderrText)
     }
+}
+
+/// The bytes the stderr reader collected, handed from its GCD thread to the awaiting task.
+private final class CollectedData: Sendable {
+    private let storage = Mutex(Data())
+    var value: Data { storage.withLock { $0 } }
+    func set(_ data: Data) { storage.withLock { $0 = data } }
 }

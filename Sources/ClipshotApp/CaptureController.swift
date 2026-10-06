@@ -11,7 +11,8 @@ final class CaptureController {
     private let flow = CaptureFlow(
         isPermissionGranted: { ScreenRecordingPermission.isGranted },
         clipboardChangeCount: { NSPasteboard.general.changeCount },
-        runScreencapture: { try await ScreencaptureRunner().run() })
+        runScreencapture: { try await ScreencaptureRunner().run() },
+        isAlertOpen: { NSApp.modalWindow != nil })
 
     /// A selection is on screen.
     var isBusy: Bool { flow.isCapturing }
@@ -19,21 +20,25 @@ final class CaptureController {
     func begin() {
         Task {
             let outcome = await flow.capture()
-            switch outcome {
-            case .copied:
-                onCopied()
-            case .cancelled, .busy:
-                break
-            case .permissionMissing:
-                Alerts.screenRecordingMissing()
-            case .failed(let exitCode, let stderr):
-                AppLog.app.error("screencapture exited \(exitCode, privacy: .public): \(stderr, privacy: .private)")
-                Alerts.captureFailed(stderr.isEmpty ? "screencapture \(exitCode) koduyla çıktı." : stderr)
-            case .launchFailed(let message):
-                AppLog.app.error("screencapture did not start: \(message, privacy: .public)")
-                Alerts.captureFailed("screencapture başlatılamadı: \(message)")
-            }
-            onFinished()
+            Alerts.fromRunLoop { [self] in report(outcome) }
         }
+    }
+
+    private func report(_ outcome: CaptureOutcome) {
+        switch outcome {
+        case .copied:
+            onCopied()
+        case .cancelled, .busy:
+            break
+        case .permissionMissing:
+            Alerts.screenRecordingMissing()
+        case .failed(let exitCode, let stderr):
+            AppLog.app.error("screencapture exited \(exitCode, privacy: .public): \(stderr, privacy: .private)")
+            Alerts.captureFailed(stderr.isEmpty ? "screencapture \(exitCode) koduyla çıktı." : stderr)
+        case .launchFailed(let message):
+            AppLog.app.error("screencapture did not start: \(message, privacy: .public)")
+            Alerts.captureFailed("screencapture başlatılamadı: \(message)")
+        }
+        onFinished()
     }
 }

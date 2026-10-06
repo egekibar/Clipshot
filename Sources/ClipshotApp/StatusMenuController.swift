@@ -97,6 +97,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
     private var shortcutLine: String {
         let label = hotKeys.combo.label
+        if hotKeys.isRecording { return "Kısayol: yeni kombinasyon bekleniyor…" }
         if hotKeys.isPaused { return "Kısayol: \(label) (duraklatıldı)" }
         if hotKeys.registrationError != nil { return "Kısayol: \(label) (çalışmıyor)" }
         return "Kısayol: \(label)"

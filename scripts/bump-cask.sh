@@ -33,5 +33,6 @@ if git -C "$WORK" diff --quiet HEAD; then
   exit 0
 fi
 git -C "$WORK" commit --quiet -am "$TOKEN $VERSION"
-git -C "$WORK" push --quiet origin HEAD
+# Through gh's login over HTTPS (the tap is cloned over HTTPS), so no SSH key is needed.
+git -C "$WORK" -c credential.helper= -c credential.helper='!gh auth git-credential' push --quiet origin HEAD
 echo "Pushed $TOKEN $VERSION ($SHA) to $TAP_REPO; users get it with: brew upgrade --cask --greedy $TOKEN"

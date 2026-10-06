@@ -14,6 +14,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PLIST="$ROOT/Resources/Info.plist"
 PLIST_BUDDY=/usr/libexec/PlistBuddy
 cd "$ROOT"
+# Git talks to GitHub through gh's login over HTTPS, the login `gh release create` needs anyway, so a release works
+# without an SSH key and whatever the clone's remote is.
+gh_git() { git -c credential.helper= -c credential.helper='!gh auth git-credential' "$@"; }
 
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "usage: make release VERSION=1.2.3 [NOTES=file]" >&2; exit 1; }
 [ -z "$NOTES" ] || [ -f "$NOTES" ] || { echo "notes file $NOTES not found" >&2; exit 1; }
@@ -40,7 +43,13 @@ fi
 
 make dmg SIGN_IDENTITY="$IDENTITY"
 git tag -a "v$VERSION" -m "$APP_NAME $VERSION"
-git push -q origin main "v$VERSION"
+if ! gh_git push -q "https://github.com/$REPO.git" main "v$VERSION"; then
+  # Without the tag a rerun starts over cleanly; the version commit, if any, stays and is pushed then.
+  git tag -d "v$VERSION" >/dev/null
+  echo "push failed; check \`gh auth status\` and run the release again" >&2
+  exit 1
+fi
+gh_git fetch -q "https://github.com/$REPO.git" "+refs/heads/main:refs/remotes/origin/main" || true
 
 # The checksum exists only now that the DMG is built, so it is appended to the notes here.
 BODY="$(mktemp "${TMPDIR:-/tmp}/$APP_NAME-notes.XXXXXX")"

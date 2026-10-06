@@ -68,8 +68,11 @@ struct CaptureFlowTests {
         let selecting = try #require(release, "the first press never started screencapture")
 
         #expect(await flow.capture() == .busy)
+        // The auto-updater reads this: it must not quit Clipshot under an open selection.
+        #expect(flow.isCapturing)
         selecting.resume()
         #expect(await first.value == .cancelled)
+        #expect(!flow.isCapturing)
         #expect(runs == 1)
     }
 

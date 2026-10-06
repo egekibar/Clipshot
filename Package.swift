@@ -19,12 +19,18 @@ let package = Package(
         .target(name: "ClipshotCore", swiftSettings: serviceSettings),
         // Carbon RegisterEventHotKey: the one global-hotkey API that needs no TCC permission at all.
         .target(name: "ClipshotHotKey", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
+        // Updates from GitHub Releases: release feed, DMG download/verify/stage, post-exit bundle swap, auto-updater.
+        .target(name: "ClipshotUpdater", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
         // AppKit composition root: menu bar item, shortcut recorder, alerts. No logic worth a test lives here.
         .executableTarget(
-            name: "ClipshotApp", dependencies: ["ClipshotCore", "ClipshotHotKey"], swiftSettings: appSettings),
+            name: "ClipshotApp", dependencies: ["ClipshotCore", "ClipshotHotKey", "ClipshotUpdater"],
+            swiftSettings: appSettings),
         .testTarget(name: "ClipshotCoreTests", dependencies: ["ClipshotCore"], swiftSettings: serviceSettings),
         .testTarget(
             name: "ClipshotHotKeyTests", dependencies: ["ClipshotHotKey", "ClipshotCore"],
+            swiftSettings: serviceSettings),
+        .testTarget(
+            name: "ClipshotUpdaterTests", dependencies: ["ClipshotUpdater", "ClipshotCore"],
             swiftSettings: serviceSettings),
     ],
     swiftLanguageModes: [.v6]

@@ -16,5 +16,6 @@
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>Clipshot</string>
+    <key>ClipshotUpdateRepo</key><string>egekibar/Clipshot</string>
 </dict>
 </plist>

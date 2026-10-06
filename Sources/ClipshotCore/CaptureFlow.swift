@@ -7,7 +7,8 @@ public final class CaptureFlow {
     private let isPermissionGranted: () -> Bool
     private let clipboardChangeCount: () -> Int
     private let runScreencapture: () async throws -> ScreencaptureResult
-    private var isCapturing = false
+    /// True while the selection is on screen; the auto-updater waits for it before quitting Clipshot.
+    public private(set) var isCapturing = false
 
     public init(
         isPermissionGranted: @escaping () -> Bool,

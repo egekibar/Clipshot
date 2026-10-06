@@ -1,20 +1,32 @@
 import AppKit
 import ClipshotCore
 import ClipshotHotKey
+import ClipshotUpdater
+
+/// What the menu's items do beyond what the menu can do on its own.
+struct StatusMenuActions {
+    var capture: () -> Void
+    var changeShortcut: () -> Void
+    var hideIcon: () -> Void
+    var checkForUpdates: () -> Void
+}
 
 /// The menu bar item. The icon shows the state (ready, paused, shortcut not working, just copied) and the menu
-/// is rebuilt every time it opens, so it never shows a stale shortcut or permission state.
+/// is rebuilt every time it opens, so it never shows a stale shortcut, permission, login or update state.
 final class StatusMenuController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let hotKeys: HotKeyController
-    private let onCapture: () -> Void
-    private let onChangeShortcut: () -> Void
+    /// nil when Clipshot does not run from an app bundle (a bare `swift run`).
+    private let loginItem: LoginItem?
+    private let updater: AutoUpdater?
+    private let actions: StatusMenuActions
     private var flashTask: Task<Void, Never>?
 
-    init(hotKeys: HotKeyController, onCapture: @escaping () -> Void, onChangeShortcut: @escaping () -> Void) {
+    init(hotKeys: HotKeyController, loginItem: LoginItem?, updater: AutoUpdater?, actions: StatusMenuActions) {
         self.hotKeys = hotKeys
-        self.onCapture = onCapture
-        self.onChangeShortcut = onChangeShortcut
+        self.loginItem = loginItem
+        self.updater = updater
+        self.actions = actions
         super.init()
         let menu = NSMenu()
         menu.delegate = self
@@ -30,6 +42,16 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         setIcon(symbol)
         statusItem.button?.appearsDisabled = hotKeys.isPaused
         statusItem.button?.toolTip = "Clipshot · \(hotKeys.combo.label)"
+    }
+
+    /// "Menü Çubuğundan Gizle": the shortcut keeps working without the icon.
+    func setIconVisible(_ visible: Bool) {
+        statusItem.isVisible = visible
+    }
+
+    /// Opens the menu as if the icon had been clicked (Clipshot was opened again from Spotlight or Finder).
+    func openMenu() {
+        statusItem.button?.performClick(nil)
     }
 
     /// A short ✓ in the menu bar: the selection is on the clipboard.
@@ -59,6 +81,17 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         if !ScreenRecordingPermission.isGranted {
             menu.addItem(item("Ekran Kaydı İzni Ver…", action: #selector(permissionClicked)))
         }
+        if let loginItem {
+            let login = item("Girişte Aç", action: #selector(loginItemClicked))
+            login.state = loginItem.isEnabled ? .on : .off
+            menu.addItem(login)
+        }
+        menu.addItem(item("Menü Çubuğundan Gizle…", action: #selector(hideClicked)))
+        menu.addItem(.separator())
+        menu.addItem(info(versionLine))
+        if updater != nil {
+            menu.addItem(item("Güncellemeleri Denetle…", action: #selector(checkForUpdatesClicked)))
+        }
         menu.addItem(item("Clipshot'tan Çık", action: #selector(quitClicked), key: "q"))
     }
 
@@ -69,14 +102,37 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         return "Kısayol: \(label)"
     }
 
-    @objc private func captureClicked() { onCapture() }
-    @objc private func changeShortcutClicked() { onChangeShortcut() }
+    private var versionLine: String {
+        let installed = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        switch updater?.phase {
+        case .checking: return "Clipshot \(installed) · denetleniyor…"
+        case .downloading(let version): return "Clipshot \(installed) · \(version) indiriliyor…"
+        case .readyToInstall(let version), .installing(let version):
+            return "Clipshot \(installed) · \(version) kuruluyor…"
+        case .idle, nil: return "Clipshot \(installed)"
+        }
+    }
+
+    @objc private func captureClicked() { actions.capture() }
+    @objc private func changeShortcutClicked() { actions.changeShortcut() }
+    @objc private func hideClicked() { actions.hideIcon() }
+    @objc private func checkForUpdatesClicked() { actions.checkForUpdates() }
     @objc private func permissionClicked() { Alerts.screenRecordingMissing() }
     @objc private func quitClicked() { NSApp.terminate(nil) }
 
     @objc private func pauseClicked() {
         hotKeys.setPaused(!hotKeys.isPaused)
         refresh()
+    }
+
+    @objc private func loginItemClicked() {
+        guard let loginItem else { return }
+        do {
+            if loginItem.isEnabled { try loginItem.disable() } else { try loginItem.enable() }
+        } catch {
+            AppLog.app.error("login item: \(error.localizedDescription, privacy: .public)")
+            Alerts.loginItemFailed(error)
+        }
     }
 
     private func item(_ title: String, action: Selector, key: String = "") -> NSMenuItem {

@@ -38,6 +38,42 @@ enum Alerts {
         return present(alert) == .alertFirstButtonReturn
     }
 
+    /// True: hide it. Says how to get the icon back, since nothing on screen will.
+    static func confirmHidingIcon() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Simge menü çubuğundan gizlensin mi?"
+        alert.informativeText = """
+            Kısayol çalışmaya devam eder. Simgeyi geri getirmek için Clipshot'u Spotlight'tan ya da \
+            Uygulamalar klasöründen yeniden aç.
+            """
+        alert.addButton(withTitle: "Gizle")
+        alert.addButton(withTitle: "Vazgeç")
+        return present(alert) == .alertFirstButtonReturn
+    }
+
+    static func upToDate(_ version: AppVersion) {
+        let alert = NSAlert()
+        alert.messageText = "Clipshot güncel"
+        alert.informativeText = "\(version) en son sürüm."
+        present(alert)
+    }
+
+    static func updateFailed(_ error: UpdateError) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Güncelleme denetlenemedi"
+        alert.informativeText = error.message
+        present(alert)
+    }
+
+    static func loginItemFailed(_ error: any Error) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Girişte açılma ayarlanamadı"
+        alert.informativeText = error.localizedDescription
+        present(alert)
+    }
+
     static func describe(_ error: HotKeyError) -> String {
         switch error {
         case .registrationFailed(-9878): "Bu kısayol zaten kayıtlı."

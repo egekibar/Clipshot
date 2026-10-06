@@ -3,7 +3,7 @@
 # DMG signed with the stable identity, tags and pushes, publishes the GitHub release with the DMG and its .sha256 (what
 # the in-app updater downloads and verifies) and points the Homebrew cask at it.
 # Usage: scripts/release.sh <version> [notes-file]     (make release VERSION=1.0.1 [NOTES=notes.md])
-#   Without a notes file GitHub generates the notes. SIGN_IDENTITY defaults to "Clipshot Dev" (`make cert`).
+#   The DMG's SHA-256 is appended to the notes. SIGN_IDENTITY defaults to "Clipshot Dev" (`make cert`).
 set -euo pipefail
 VERSION="${1:-}"
 NOTES="${2:-}"
@@ -42,9 +42,18 @@ make dmg SIGN_IDENTITY="$IDENTITY"
 git tag -a "v$VERSION" -m "$APP_NAME $VERSION"
 git push -q origin main "v$VERSION"
 
-NOTES_ARGS=(--generate-notes)
-if [ -n "$NOTES" ]; then NOTES_ARGS=(--notes-file "$NOTES"); fi
+# The checksum exists only now that the DMG is built, so it is appended to the notes here.
+BODY="$(mktemp "${TMPDIR:-/tmp}/$APP_NAME-notes.XXXXXX")"
+trap 'rm -f "$BODY"' EXIT
+{
+  if [ -n "$NOTES" ]; then cat "$NOTES"; echo; fi
+  echo "## SHA-256"
+  echo
+  echo '```'
+  cat "dist/$APP_NAME-$VERSION.dmg.sha256"
+  echo '```'
+} > "$BODY"
 gh release create "v$VERSION" "dist/$APP_NAME-$VERSION.dmg" "dist/$APP_NAME-$VERSION.dmg.sha256" \
-  --repo "$REPO" --title "$APP_NAME $VERSION" --verify-tag "${NOTES_ARGS[@]}"
+  --repo "$REPO" --title "$APP_NAME $VERSION" --verify-tag --notes-file "$BODY"
 ./scripts/bump-cask.sh "$APP_NAME"
 echo "Released $APP_NAME $VERSION: https://github.com/$REPO/releases/tag/v$VERSION"

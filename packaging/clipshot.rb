@@ -26,8 +26,8 @@ cask "clipshot" do
         writable_base:  :appdir
   end
 
-  uninstall quit:      "com.egekibar.clipshot",
-            launchctl: "com.egekibar.clipshot"
+  uninstall launchctl: "com.egekibar.clipshot",
+            quit:      "com.egekibar.clipshot"
 
   zap trash: [
     "~/Library/LaunchAgents/com.egekibar.clipshot.plist",

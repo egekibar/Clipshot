@@ -22,8 +22,24 @@ aç, sonra "Çık ve Yeniden Aç"a bas. Güncellemeler aynı sertifikayla imzala
 
 - **⌘P**: artı imleci çıkar, sürükleyerek alan seç. Bıraktığın anda görüntü panodadır ve menü çubuğunda kısa bir ✓ görünür.
 - **Space**: pencere seçimine geç. **Esc**: vazgeç.
+- Seçimden sonra alan yerinde donar; istersen üzerine işaret koyarsın (aşağıya bak).
 - Menü çubuğu simgesi: *Seçili Alanı Kopyala*, *Kısayolu Değiştir…*, *Kısayolu Duraklat*, *Girişte Aç*,
   *Menü Çubuğundan Gizle…*, *Güncellemeleri Denetle…*, *Clipshot'tan Çık*.
+
+### İşaretleme
+
+Seçim biter bitmez görüntü panoya gider ve seçtiğin alan olduğu yerde donar: etrafında ince bir çerçeve, altında
+küçük bir araç çubuğu. İşaret koyman gerekmiyorsa başka bir yere tıklayıp devam et; panoda sade görüntü kalır.
+
+| Tuş | Ne yapar |
+|---|---|
+| `1` `2` `3` `4` | Kutu, Ok, Fosforlu kalem, Serbest kalem (açılışta kırmızı kutu seçili) |
+| ↩ ya da ⌘C | İşaretli hali panoya koyar ve kapatır; başka bir yere tıklamak da işaretleri korur |
+| ⌘Z ya da ⌫ | Son işareti geri alır |
+| Esc | İşaretleri atar; panoda sade görüntü kalır |
+
+Renkler araç çubuğundaki noktalardan seçilir; her araç kendi rengini hatırlar (fosforlu kalem sarı başlar). Panoya
+giden görüntü tam Retina çözünürlüğündedir. İşaretlerken ⌘P'ye basarsan işaretler korunur ve yeni seçim başlar.
 
 ### ⌘P ve yazdırma
 
@@ -78,6 +94,9 @@ içinde kendini günceller.
   vuruşlarını dinlemez; yalnızca kayıtlı kombinasyon uygulamaya iletilir.
 - **Seçim:** `/usr/sbin/screencapture -i -c`. Seçim arayüzü macOS'un kendisi; görüntü ⌃⇧⌘4 ile aynı biçimde panoya
   yazılır, diske dosya yazılmaz.
+- **İşaretleme:** Seçim sırasında farenin basıldığı ve bırakıldığı yerler (genel fare izleyicisi, izin istemez) alanın
+  ekrandaki yerini verir; görüntü tam orada, Clipshot'u etkinleştirmeyen bir panelde açılır. Ekranda görünen ve panoya
+  giden işaretler aynı CoreGraphics koduyla çizilir.
 - **İzin:** screencapture, Ekran Kaydı iznini kendisini başlatan uygulamaya sorar. O yüzden izin Clipshot'a verilir ve
   gerçek bir `.app` paketi gerekir.
 - **Sonuç:** Esc çıkış kodu 1 ve boş stderr demektir, hata sayılmaz. Kopyalamanın olduğu, panonun `changeCount`
@@ -90,6 +109,8 @@ içinde kendini günceller.
 |---|---|
 | `ClipshotCore` | Yalnızca Foundation: kısayol modeli, screencapture çalıştırıcısı, yakalama kuralları, sürüm ve release okuma, güncelleme zamanlaması, giriş öğesi, tercihler |
 | `ClipshotHotKey` | Carbon kısayol servisi ve kısayolu yöneten denetleyici (duraklat, kaydet, geri yükle) |
+| `ClipshotMarkup` | Yalnızca CoreGraphics: işaretler, geri alma, panel yerleşimi, kısayollar, Retina çizimi |
+| `ClipshotMarkupUI` | AppKit: işaretleme paneli, tuval, araç çubuğu |
 | `ClipshotUpdater` | GitHub release akışı, DMG indirme/doğrulama/hazırlama, paket değiştirme, otomatik güncelleyici |
 | `ClipshotApp` | AppKit: menü çubuğu, kısayol kayıt penceresi, uyarılar |
 

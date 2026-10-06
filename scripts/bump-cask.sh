@@ -1,7 +1,8 @@
 #!/bin/bash
 # Points the Homebrew cask in egekibar/homebrew-tap at the published GitHub release of the current version: sets
 # `version` and `sha256` (taken from the release's own .sha256 asset, so the cask matches what users download)
-# and pushes it. Run it after the release is published. The first run adds the cask from packaging/<token>.rb.
+# and pushes it. Run it after the release is published. packaging/<token>.rb is the cask's source: it is copied over
+# the tap's copy every time, so changes to it (zap paths, say) ship with the next release.
 # Usage: scripts/bump-cask.sh [AppName]     (TAP_REPO / APP_REPO override the GitHub repositories)
 set -euo pipefail
 APP_NAME="${1:-Clipshot}"
@@ -19,12 +20,10 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/$APP_NAME-tap.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 git clone --quiet "https://github.com/$TAP_REPO.git" "$WORK"
 CASK="$WORK/Casks/$TOKEN.rb"
-if [ ! -f "$CASK" ]; then
-  [ -f "$ROOT/packaging/$TOKEN.rb" ] || { echo "$TAP_REPO has no Casks/$TOKEN.rb and there is no template" >&2; exit 1; }
-  mkdir -p "$WORK/Casks"
-  cp "$ROOT/packaging/$TOKEN.rb" "$CASK"
-  git -C "$WORK" add "Casks/$TOKEN.rb"
-fi
+[ -f "$ROOT/packaging/$TOKEN.rb" ] || { echo "packaging/$TOKEN.rb is missing" >&2; exit 1; }
+mkdir -p "$WORK/Casks"
+cp "$ROOT/packaging/$TOKEN.rb" "$CASK"
+git -C "$WORK" add "Casks/$TOKEN.rb"
 sed -i '' -E -e "s/^  version \"[^\"]*\"/  version \"$VERSION\"/" -e "s/^  sha256 \"[0-9a-f]{64}\"/  sha256 \"$SHA\"/" "$CASK"
 grep -qF "version \"$VERSION\"" "$CASK" && grep -qF "sha256 \"$SHA\"" "$CASK" ||
   { echo "could not update $CASK" >&2; exit 1; }

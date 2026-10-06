@@ -158,7 +158,7 @@ public final class HistoryWindowController: NSObject, NSCollectionViewDataSource
     // MARK: - Window
 
     private func makeWindow() -> NSWindow {
-        let window = NSWindow(
+        let window = HistoryWindow(
             contentRect: NSRect(x: 0, y: 0, width: 780, height: 540),
             styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         window.title = "Geçmiş"
@@ -228,6 +228,12 @@ public final class HistoryWindowController: NSObject, NSCollectionViewDataSource
         window.contentView = content
         return window
     }
+}
+
+/// Esc (and ⌘.) closes Geçmiş the way its close button does. Both arrive here as `cancelOperation`, whether the grid
+/// or the window itself has the keyboard.
+final class HistoryWindow: NSWindow {
+    override func cancelOperation(_ sender: Any?) { performClose(sender) }
 }
 
 /// Knows which item a right-click landed on.
